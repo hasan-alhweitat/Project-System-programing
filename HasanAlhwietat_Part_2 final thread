@@ -1,0 +1,369 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+#include <openssl/sha.h>
+#include <string.h>
+#include <fcntl.h>
+#include <pthread.h>
+
+#define SIZE_ARRAY 1000
+int arr[SIZE_ARRAY], key = 55;
+pthread_mutex_t lock; 
+
+void hashFunction(){
+    unsigned char sha256_digest[SHA256_DIGEST_LENGTH];
+    unsigned char *buffer;
+
+    int fb = open("hash.text", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    const char *text = "Hasan";
+    ssize_t bytes_written = write(fb, buffer, strlen(text));
+    close(fb);
+
+    int f2 = open("hash.text",O_RDONLY,0);
+    buffer= malloc(1*sizeof(unsigned char));
+    int j;
+    while(j=read(f2, buffer, sizeof(buffer))>0){
+        buffer=(unsigned char *)realloc(buffer,1+sizeof(buffer));
+    }
+    SHA256(buffer,strlen(buffer),sha256_digest);
+    close(f2);
+    int f3 = open("hashResult.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    char hash_result[SHA256_DIGEST_LENGTH * 2 + 1];
+    hash_result[SHA256_DIGEST_LENGTH * 2] = '\0'; 
+    
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        sprintf(&hash_result[i * 2], "%02x", sha256_digest[i]);
+    }
+
+    ssize_t bytes_written_result = write(f3, hash_result, strlen(hash_result));
+    close(f3);
+    printf("Implement Hashing and stored in file hashResult.text\n");
+    free(buffer);
+}
+
+void linearSearch(int arr[], int size, int key) {
+    int count = 0;
+    for (int i = 0; i < size; i++) {
+        if (arr[i] == key) {
+            count++;
+        }
+    }
+    printf("Element frequency in linearSearch: %d\n", count);
+}
+
+void binarySearch(int arr[], int size, int key) {
+    int low = 0, high = size - 1, mid, count = 0;
+    while (low <= high) {
+        mid = (low + high) / 2;
+        if (arr[mid] == key) {
+            count++;
+            int left = mid - 1;
+            while (left >= 0 && arr[left] == key) {
+                count++;
+                left--;
+            }
+            int right = mid + 1;
+            while (right < size && arr[right] == key) {
+                count++;
+                right++;
+            }
+            break;
+        } else if (arr[mid] < key) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    printf("Element frequency in Binary Search: %d\n", count);
+}
+
+void interpolationSearch(int arr[], int size, int key) {
+    int low = 0, high = size - 1, count = 0;
+    while (low <= high && key >= arr[low] && key <= arr[high]) {
+        int pos = low + ((double)(high - low) / (arr[high] - arr[low])) * (key - arr[low]);
+        if (arr[pos] == key) {
+            count++;
+            int left = pos - 1;
+            while (left >= 0 && arr[left] == key) {
+                count++;
+                left--;
+            }
+            int right = pos + 1;
+            while (right < size && arr[right] == key) {
+                count++;
+                right++;
+            }
+            break;
+        } else if (arr[pos] < key) {
+            low = pos + 1;
+        } else {
+            high = pos - 1;
+        }
+    }
+    printf("Element frequency in interpolation Search: %d\n", count);
+}
+
+void exponentialSearch(int arr[], int size, int key) {
+    int count = 0;
+    if (arr[0] == key) {
+        count++;
+    }
+    int i = 1;
+    while (i < size && arr[i] <= key) {
+        if (arr[i] == key) {
+            count++;
+        }
+        i = i * 2;
+    }
+    int low = i / 2;
+    int high = (i < size) ? i : size - 1;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        if (arr[mid] == key) {
+            count++;
+            int left = mid - 1;
+            while (left >= 0 && arr[left] == key) {
+                count++;
+                left--;
+            }
+            int right = mid + 1;
+            while (right < size && arr[right] == key) {
+                count++;
+                right++;
+            }
+            break;
+        } else if (arr[mid] < key) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    printf("Element frequency in exponentialSearch: %d\n", count);
+}
+
+void bubbleSort(int arr[], int size, const char *fileBubbleSort) {
+    for (int i = 0; i < size - 1; i++) {
+        for (int j = 0; j < size - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                int temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+    
+    int fb = open(fileBubbleSort, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fb == -1) {
+        perror("Unable to open file");
+        exit(1);
+    }
+    
+    for (int i = 0; i < size; i++) {
+        char buffer[size]; 
+        int length = snprintf(buffer, sizeof(buffer), "%d ", arr[i]);
+        write(fb, buffer, length);
+    }
+    close(fb);
+}
+
+void selectionSort(int arr[], int size, const char *fileSelectionSort) {
+    for (int i = 0; i < size - 1; i++) {
+        int min_index = i;
+        for (int j = i + 1; j < size; j++) {
+            if (arr[j] < arr[min_index]) {
+                min_index = j;
+            }
+        }
+        int temp = arr[i];
+        arr[i] = arr[min_index];
+        arr[min_index] = temp;
+    }
+
+    int fb = open(fileSelectionSort, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fb == -1) {
+        perror("Unable to open file");
+        exit(1);
+    }
+    
+    for (int i = 0; i < size; i++) {
+        char buffer[size]; 
+        int length = snprintf(buffer, sizeof(buffer), "%d ", arr[i]);
+        write(fb, buffer, length);
+    }
+    close(fb);
+}
+
+void insertionSort(int arr[], int size, const char *fileInsertionSort) {
+    int i, key, j;
+    for (i = 1; i < size; i++) {
+        key = arr[i];
+        j = i - 1;
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+    int fb = open(fileInsertionSort, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fb == -1) {
+        perror("Unable to open file");
+        exit(1);
+    }
+    
+    for (int i = 0; i < size; i++) {
+        char buffer[size]; 
+        int length = snprintf(buffer, sizeof(buffer), "%d ", arr[i]);
+        write(fb, buffer, length);
+    }
+    close(fb);
+}
+
+int partition(int arr[], int low, int high) {
+    int pivot = arr[high];
+    int i = (low - 1);
+    
+    for (int j = low; j <= high - 1; j++) {
+        if (arr[j] < pivot) {
+            i++;
+            int temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+    }
+    int temp = arr[i + 1];
+    arr[i + 1] = arr[high];
+    arr[high] = temp;
+    return (i + 1);
+}
+
+void quickSort(int arr[], int low, int high, const char *fileQuickSort) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quickSort(arr, low, pi - 1, fileQuickSort);
+        quickSort(arr, pi + 1, high, fileQuickSort);
+    }
+    if (low == 0 && high == SIZE_ARRAY - 1) {
+        int fb = open(fileQuickSort, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (fb == -1) {
+            perror("Unable to open file");
+        exit(1);
+        }
+    
+        for (int i = 0; i < SIZE_ARRAY; i++) {
+            char buffer[SIZE_ARRAY]; 
+            int length = snprintf(buffer, sizeof(buffer), "%d ", arr[i]);
+            write(fb, buffer, length);
+        }
+        close(fb);
+    }
+}
+
+void *multi_Threading(void *arg){
+    int number = *((int *)arg);
+    clock_t start, end;
+    switch(number){
+        case 1:
+            start = clock();
+            hashFunction();
+            end = clock();
+            printf("Execution time for hash function: %.10f seconds\n", (double)(end - start) / CLOCKS_PER_SEC);
+            break;
+        case 2:
+            start = clock();
+            bubbleSort(arr, SIZE_ARRAY, "bubble_sort.txt");
+            printf("\nSorted array using Bubble Sort and stored in bubble_sort.txt\n");
+            end = clock();
+            printf("Execution time for Bubble Sort: %.10f seconds\n\n", (double)(end - start) / CLOCKS_PER_SEC);
+            break;
+        case 3:
+            start = clock(); 
+            selectionSort(arr, SIZE_ARRAY, "selection_sort.txt");
+            printf("\nSorted array using Selection Sort and stored in selection_sort.txt\n");
+            end = clock();
+            printf("Execution time for Selection Sort: %.10f seconds\n\n", (double)(end - start) / CLOCKS_PER_SEC);
+            break;
+        case 4:
+            start = clock(); 
+            insertionSort(arr, SIZE_ARRAY, "insertion_sort.txt");
+            printf("\nSorted array using Insertion Sort and stored in insertion_sort.txt\n");
+            end = clock();
+            printf("Execution time for Insertion Sort: %.10f seconds\n\n", (double)(end - start) / CLOCKS_PER_SEC); 
+            break;
+        case 5:
+            start = clock(); 
+            quickSort(arr, 0, SIZE_ARRAY - 1, "quick_sort.txt");
+            printf("\nSorted array using Quick Sort and stored in quick_sort.txt\n");
+            end = clock();
+            printf("Execution time for Quick Sort: %.10f seconds\n\n", (double)(end - start) / CLOCKS_PER_SEC);
+            break;
+        case 6:
+            insertionSort(arr, SIZE_ARRAY, "insertion_sort.txt");
+            start = clock(); 
+            printf("\nSearching for key %d using Linear Search...\n", key);
+            linearSearch(arr, SIZE_ARRAY, key);
+            end = clock();
+            printf("Execution time for Linear Search: %.10f seconds\n\n", (double)(end - start) / CLOCKS_PER_SEC);
+            pthread_exit(NULL);
+            break;
+        case 7:
+            insertionSort(arr, SIZE_ARRAY, "insertion_sort.txt");
+            start = clock(); 
+            printf("\nSearching for key %d using Binary Search...\n", key);
+            binarySearch(arr, SIZE_ARRAY, key);
+            end = clock();
+            printf("Execution time for Binary Search: %.10f seconds\n\n", (double)(end - start) / CLOCKS_PER_SEC);
+            break;
+        case 8:
+            insertionSort(arr, SIZE_ARRAY, "insertion_sort.txt");
+            start = clock(); 
+            printf("\nSearching for key %d using Interpolation Search...\n", key);
+            interpolationSearch(arr, SIZE_ARRAY, key);
+            end = clock();
+            printf("Execution time for Interpolation Search: %.10f seconds\n\n", (double)(end - start) / CLOCKS_PER_SEC);
+            break;
+        case 9:
+            insertionSort(arr, SIZE_ARRAY, "insertion_sort.txt");
+            start = clock(); 
+            printf("\nSearching for key %d using Exponential Search...\n", key);
+            exponentialSearch(arr, SIZE_ARRAY, key);
+            end = clock();
+            printf("Execution time for Exponential Search: %.10f seconds\n\n", (double)(end - start) / CLOCKS_PER_SEC);
+            break;
+        default: 
+            printf("Invalid choice! Please try again.\n");
+    }
+    pthread_exit(NULL);
+}
+
+int main(int argc, char *argv[]) {
+    clock_t start = clock();
+    int n = 9;
+    pthread_t threads[n];
+    int thread_args[n];
+    clock_t startArr, endArr;
+
+    startArr = clock();
+    srand(time(NULL));
+    for (int i = 0; i < SIZE_ARRAY; i++) {
+        arr[i] = rand() % 100;
+    }
+    endArr = clock();
+    printf("\nExecution time for Generate array random: %.10f seconds\n", (double)(endArr - startArr) / CLOCKS_PER_SEC);
+
+    pthread_mutex_init(&lock, NULL);
+
+    for (int i=0; i < n; i++){
+        thread_args[i] = i + 1;
+        pthread_create(&threads[i], NULL, multi_Threading, (void *) &thread_args[i]);
+    }
+    for (int i = 0; i < n; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    pthread_mutex_destroy(&lock);
+    
+    clock_t end = clock();
+    printf("\nExecution time All programm: %.10f seconds\n", (double)(end - start) / CLOCKS_PER_SEC);
+    return 0;
+}
